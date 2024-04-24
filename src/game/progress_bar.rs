@@ -1,11 +1,11 @@
-use bevy::prelude::{shape::Quad, *};
+use bevy::prelude::{Rectangle, *};
 
 pub struct ProgressBarPlugin;
 
 impl Plugin for ProgressBarPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(on_spawn_progress_bar)
-            .add_system(set_progress_bar);
+        app.add_systems(Update, on_spawn_progress_bar)
+            .add_systems(Update, set_progress_bar);
     }
 }
 
@@ -43,7 +43,7 @@ pub struct ProgressBarBundle {
     pub transform: Transform,
     pub global_transform: GlobalTransform,
     pub visibility: Visibility,
-    pub computed_visibiltiy: ComputedVisibility,
+    pub computed_visibiltiy: InheritedVisibility,
 }
 
 fn on_spawn_progress_bar(
@@ -55,25 +55,22 @@ fn on_spawn_progress_bar(
 ) {
     for (entity, bar) in &bars {
         commands.entity(entity).with_children(|parent| {
-            parent.spawn_bundle(PbrBundle {
+            parent.spawn(PbrBundle {
                 material: materials.add(StandardMaterial {
                     base_color: Color::rgb_u8(50, 50, 50),
                     depth_bias: 100.0,
                     unlit: true,
                     ..default()
                 }),
-                mesh: meshes.add(
-                    Quad {
-                        size: Vec2::new(bar.width, bar.height),
-                        ..default()
-                    }
-                    .into(),
-                ),
+                mesh: meshes.add(Rectangle {
+                    half_size: Vec2::new(bar.width, bar.height),
+                    ..default()
+                }),
                 transform: Transform::from_xyz(0.0, 0.0, ProgressBar::Z),
                 ..default()
             });
             parent
-                .spawn_bundle(PbrBundle {
+                .spawn(PbrBundle {
                     material: materials.add(StandardMaterial {
                         base_color: Color::rgb_u8(150, 150, 150),
                         depth_bias: 102.0,
@@ -81,16 +78,13 @@ fn on_spawn_progress_bar(
                         ..default()
                     }),
                     transform: Transform::from_xyz(0.0, 0.0, ProgressBar::Z + 0.005),
-                    mesh: meshes.add(
-                        Quad {
-                            size: Vec2::new(
-                                bar.width - bar.padding * 2.0,
-                                bar.height - bar.padding * 2.0,
-                            ),
-                            ..default()
-                        }
-                        .into(),
-                    ),
+                    mesh: meshes.add(Rectangle {
+                        half_size: Vec2::new(
+                            bar.width - bar.padding * 2.0,
+                            bar.height - bar.padding * 2.0,
+                        ),
+                        ..default()
+                    }),
                     ..default()
                 })
                 .insert(ProgressBarStatus);

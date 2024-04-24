@@ -15,17 +15,17 @@ impl Plugin for TilePlugin {
         app.init_resource::<TileData>()
             .init_resource::<TileGrid>()
             .init_resource::<HoveredTile>()
-            .add_startup_system(spawn_tiles)
-            .add_system_to_stage(CoreStage::PostUpdate, on_spawn_tile)
-            .add_system(hover_tile.after(crate::game::card::select_card))
-            .add_system(evaluate_tiles.after(hover_tile));
+            .add_systems(Startup, spawn_tiles)
+            .add_systems(PostUpdate, on_spawn_tile)
+            .add_systems(Update, hover_tile.after(crate::game::card::select_card))
+            .add_systems(Update, evaluate_tiles.after(hover_tile));
     }
 }
 
 fn spawn_tiles(mut commands: Commands, tile_data: Res<TileData>) {
     for x in -1..2 {
         for y in -1..2 {
-            commands.spawn_bundle(TileBundle {
+            commands.spawn(TileBundle {
                 tile: Tile::Woods {
                     slotted_villager: None,
                     progress_bar: None,
@@ -35,7 +35,7 @@ fn spawn_tiles(mut commands: Commands, tile_data: Res<TileData>) {
             });
         }
     }
-    commands.spawn_bundle(TileBundle {
+    commands.spawn(TileBundle {
         tile: Tile::Enemies { progress_bar: None },
         tile_grid_location: TileGridLocation(IVec2::new(0, 2)),
         ..default()
@@ -112,7 +112,7 @@ impl Tile {
                     commands.entity(tile_entity).with_children(|parent| {
                         new_progress_bar = Some(
                             parent
-                                .spawn_bundle(ProgressBarBundle {
+                                .spawn(ProgressBarBundle {
                                     progress_bar: ProgressBar {
                                         current: 0.0,
                                         total: 15.0,
@@ -150,9 +150,10 @@ pub struct TileBundle {
     pub transform: Transform,
     pub global_transform: GlobalTransform,
     pub visibility: Visibility,
-    pub computed_visibiltiy: ComputedVisibility,
+    pub computed_visibiltiy: InheritedVisibility,
 }
 
+#[derive(Resource)]
 pub struct TileData {
     mesh: Handle<Mesh>,
     woods_material: Handle<StandardMaterial>,
@@ -168,20 +169,14 @@ impl FromWorld for TileData {
         let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
         let asset_server = world.resource::<AssetServer>();
         Self {
-            mesh: meshes.add(
-                shape::Quad {
-                    size: Vec2::new(3.0, 3.0),
-                    ..default()
-                }
-                .into(),
-            ),
-            tile_slot_mesh: meshes.add(
-                shape::Quad {
-                    size: Tile::slot_size(),
-                    ..default()
-                }
-                .into(),
-            ),
+            mesh: meshes.add(Rectangle {
+                half_size: Vec2::new(3.0, 3.0),
+                ..default()
+            }),
+            tile_slot_mesh: meshes.add(Rectangle {
+                half_size: Tile::slot_size(),
+                ..default()
+            }),
             woods_material: materials.add(StandardMaterial {
                 base_color_texture: Some(asset_server.load("tile_woods.png")),
                 base_color: Color::rgb_u8(90, 110, 90),
@@ -210,7 +205,7 @@ impl FromWorld for TileData {
     }
 }
 
-#[derive(Default, Deref, DerefMut)]
+#[derive(Default, Deref, DerefMut, Resource)]
 pub struct TileGrid(HashMap<IVec2, Entity>);
 
 fn on_spawn_tile(
@@ -230,7 +225,7 @@ fn on_spawn_tile(
                 progress_bar,
             } => {
                 commands.entity(entity).with_children(|parent| {
-                    parent.spawn_bundle(PbrBundle {
+                    parent.spawn(PbrBundle {
                         material: tile_data.woods_material.clone(),
                         mesh: tile_data.mesh.clone(),
                         ..default()
@@ -239,7 +234,7 @@ fn on_spawn_tile(
             }
             Tile::Enemies { progress_bar } => {
                 commands.entity(entity).with_children(|parent| {
-                    parent.spawn_bundle(PbrBundle {
+                    parent.spawn(PbrBundle {
                         material: tile_data.enemies_material.clone(),
                         mesh: tile_data.mesh.clone(),
                         ..default()
@@ -247,7 +242,7 @@ fn on_spawn_tile(
 
                     *progress_bar = Some(
                         parent
-                            .spawn_bundle(ProgressBarBundle {
+                            .spawn(ProgressBarBundle {
                                 progress_bar: ProgressBar {
                                     current: 0.0,
                                     total: 20.0,
@@ -268,11 +263,11 @@ fn on_spawn_tile(
             commands.entity(entity).with_children(|parent| {
                 tile_slot = Some(
                     parent
-                        .spawn_bundle(PbrBundle {
+                        .spawn(PbrBundle {
                             material: tile_data.tile_slot_material.clone(),
                             mesh: tile_data.tile_slot_mesh.clone(),
                             transform: Transform::from_xyz(0.0, 0.0, 0.001),
-                            visibility: Visibility { is_visible: false },
+                            visibility: Visibility::Hidden,
                             ..default()
                         })
                         .id(),
@@ -294,17 +289,20 @@ pub fn enemy_tile_spawner(
     if *grid_size == UVec2::new(0, 0) {
         *grid_size = UVec2::new(3, 3);
     }
-    let timer = timer.get_or_insert(Timer::new(Duration::from_secs_f32(60.0), true));
+    let timer = timer.get_or_insert(Timer::new(
+        Duration::from_secs_f32(60.0),
+        TimerMode::Repeating,
+    ));
     if timer.tick(time.delta()).just_finished() {}
 }
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct HoveredTile(pub Option<Entity>);
 
 pub fn hover_tile(
     hover_point: Res<HoverPoint>,
     tile_grid: Res<TileGrid>,
-    mouse_input: Res<Input<MouseButton>>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
     mut hovered_tile: ResMut<HoveredTile>,
     selected_card: Res<SelectedCard>,
     mut visibilities: Query<&mut Visibility>,
@@ -314,7 +312,7 @@ pub fn hover_tile(
     if let Some(tile_entity) = hovered_tile.0 {
         if let Ok(tile_slot) = tile_slots.get(tile_entity) {
             let mut visibility = visibilities.get_mut(tile_slot.0).unwrap();
-            visibility.is_visible = false;
+            *visibility = Visibility::Hidden;
         }
     }
     for (tile, tile_slot) in tiles.iter() {
@@ -323,7 +321,11 @@ pub fn hover_tile(
                 slotted_villager, ..
             } => {
                 let mut visibility = visibilities.get_mut(tile_slot.0).unwrap();
-                visibility.is_visible = slotted_villager.is_some();
+                *visibility = if slotted_villager.is_some() {
+                    Visibility::Visible
+                } else {
+                    Visibility::Hidden
+                };
             }
             _ => {}
         }
@@ -336,7 +338,7 @@ pub fn hover_tile(
                 hovered_tile.0 = Some(*tile_entity);
                 let tile_slot = tile_slots.get(*tile_entity).unwrap().0;
                 let mut visibility = visibilities.get_mut(tile_slot).unwrap();
-                visibility.is_visible = true;
+                *visibility = Visibility::Visible;
             } else {
                 hovered_tile.0 = None;
             }
@@ -362,7 +364,7 @@ fn evaluate_tiles(
                     if let Ok(mut bar) = progress_bars.get_mut(bar_entity) {
                         bar.add(time.delta_seconds());
                         if bar.finished() {
-                            commands.spawn_bundle(CardBundle {
+                            commands.spawn(CardBundle {
                                 card: Card::from(CardType::Log),
                                 transform: Transform::from_xyz(
                                     transform.translation.x + Tile::SPAWN_OFFSET,
@@ -381,7 +383,7 @@ fn evaluate_tiles(
                     if let Ok(mut bar) = progress_bars.get_mut(bar_entity) {
                         bar.add(time.delta_seconds());
                         if bar.finished() {
-                            commands.spawn_bundle(CardBundle {
+                            commands.spawn(CardBundle {
                                 card: Card::from(CardType::Goblin),
                                 transform: Transform::from_xyz(
                                     transform.translation.x,

@@ -6,7 +6,7 @@ pub mod tile;
 
 use std::f32::consts::PI;
 
-use self::camera::PlayerCameraPlugin;
+use self::{camera::PlayerCameraPlugin, card::CardInfo};
 use crate::game::{
     card::{Card, CardBundle, CardPlugin, CardType},
     progress_bar::{ProgressBar, ProgressBarBundle, ProgressBarPlugin},
@@ -33,7 +33,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     commands.spawn(CardBundle {
-        transform: Transform::from_xyz(-0.5, 0.0, 0.0),
+        transform: Transform::from_xyz(-0.5, 10.0, 0.0),
         card: Card::from(CardType::Villager),
         ..default()
     });
@@ -51,10 +51,7 @@ fn setup(
 
     // commands.spawn(CardBundle {
     //     transform: Transform::from_xyz(1.0, 0.0, 0.0),
-    //     card: Card {
-    //         card_type: CardType::Log,
-    //         ..default()
-    //     },
+    //     card: Card::from(CardType::Log),
     //     ..default()
     // });
 }

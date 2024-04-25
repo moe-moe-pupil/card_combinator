@@ -147,6 +147,7 @@ impl CardType {
     }
 }
 
+#[derive(Debug)]
 pub struct CardStats {
     pub health: isize,
     pub max_health: usize,
@@ -267,24 +268,18 @@ impl FromWorld for CardData {
             ..card_base_material.clone()
         };
         Self {
-            mesh: meshes.add(
-                Rectangle {
-                    half_size: Vec2::new(Card::ASPECT_RATIO, 1.0),
-                    ..default()
-                },
-            ),
-            portrait_mesh: meshes.add(
-                Rectangle {
-                    half_size: Vec2::new(Card::ART_ASPECT, 1.0) * 0.65,
-                    ..default()
-                },
-            ),
-            heart_mesh: meshes.add(
-                Rectangle {
-                    half_size: Vec2::new(HEART_WIDTH, HEART_HEIGHT),
-                    ..default()
-                },
-            ),
+            mesh: meshes.add(Rectangle {
+                half_size: Vec2::new(Card::ASPECT_RATIO, 1.0),
+                ..default()
+            }),
+            portrait_mesh: meshes.add(Rectangle {
+                half_size: Vec2::new(Card::ART_ASPECT, 1.0) * 0.65,
+                ..default()
+            }),
+            heart_mesh: meshes.add(Rectangle {
+                half_size: Vec2::new(HEART_WIDTH, HEART_HEIGHT),
+                ..default()
+            }),
             villager_portrait_base: materials.add(StandardMaterial {
                 base_color_texture: Some(asset_server.load("villager.png")),
                 ..villager_base.clone()
@@ -347,6 +342,7 @@ fn on_spawn_card(
     cards: Query<(Entity, &Card), Added<Card>>,
 ) {
     for (entity, card) in &cards {
+        println!("{:#?}", card.info.stats);
         commands.entity(entity).with_children(|parent| {
             parent.spawn(PbrBundle {
                 material: card_data.class_material(card.class()),
@@ -364,7 +360,7 @@ fn on_spawn_card(
                 .with_children(|parent| {
                     let max = card.info.stats.max_health;
                     let offset = HEART_PANEL_WIDTH / max as f32;
-                    let width = (max - 1) as f32 * offset;
+                    let width = (max as f32 - 1.0)  * offset;
                     for i in 0..max {
                         parent.spawn(PbrBundle {
                             material: card_data.heart_material.clone(),
@@ -418,7 +414,7 @@ fn move_cards(
             z_offset += card.animations.select.tick(time.delta());
             if let HoverPoint::Some(hover_point) = *hover_point {
                 transform.translation.x = hover_point.x;
-                transform.translation.y = hover_point.y;
+                transform.translation.y = -hover_point.y;
             }
         } else {
             z_offset += card.animations.deselect.tick(time.delta());
@@ -668,8 +664,8 @@ pub fn select_card(
                             let slot_size = Tile::slot_size();
                             if transform.translation.x - slot_size.x / 2.0 < hover_point.x
                                 && hover_point.x < transform.translation.x + slot_size.x / 2.0
-                                && transform.translation.y - slot_size.y / 2.0 < hover_point.y
-                                && hover_point.y < transform.translation.y + slot_size.y / 2.0
+                                && transform.translation.y - slot_size.y / 2.0 < -hover_point.y
+                                && -hover_point.y < transform.translation.y + slot_size.y / 2.0
                             {
                                 if tile.try_slotting_card(&mut commands, tile_entity, entity, &card)
                                 {

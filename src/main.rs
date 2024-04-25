@@ -18,8 +18,8 @@ fn main() {
             ..Default::default()
         }))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
-        // .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
-        // .add_plugin(RapierDebugRenderPlugin::default())
+        // .add_plugins(bevy_inspector_egui::WorldInspectorPlugin::new())
+        .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(GamePlugin)
         .run();
 }

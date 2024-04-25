@@ -214,7 +214,7 @@ pub struct StackRoots {
 impl Default for CardBundle {
     fn default() -> Self {
         Self {
-            collider: Collider::cuboid(Card::ASPECT_RATIO / 2.0, 1.0 / 2.0, 0.2),
+            collider: Collider::cuboid(Card::ASPECT_RATIO , 1.0 , 0.2),
             sensor: Sensor,
             active_events: ActiveEvents::COLLISION_EVENTS,
             active_collision_types: ActiveCollisionTypes::all(),
@@ -334,7 +334,7 @@ impl CardData {
 
 const HEART_WIDTH: f32 = 0.11;
 const HEART_HEIGHT: f32 = 0.1;
-const HEART_PANEL_WIDTH: f32 = 0.6;
+const HEART_PANEL_WIDTH: f32 = 1.2;
 
 fn on_spawn_card(
     mut commands: Commands,
@@ -367,8 +367,8 @@ fn on_spawn_card(
                             mesh: card_data.heart_mesh.clone(),
                             transform: Transform::from_xyz(
                                 i as f32 * offset - width / 2.0,
-                                0.37,
-                                0.01,
+                                0.74,
+                                0.05,
                             ),
                             ..default()
                         });

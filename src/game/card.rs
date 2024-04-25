@@ -342,7 +342,6 @@ fn on_spawn_card(
     cards: Query<(Entity, &Card), Added<Card>>,
 ) {
     for (entity, card) in &cards {
-        println!("{:#?}", card.info.stats);
         commands.entity(entity).with_children(|parent| {
             parent.spawn(PbrBundle {
                 material: card_data.class_material(card.class()),
@@ -582,7 +581,6 @@ pub fn select_card(
         let screen_size = camera.logical_target_size().unwrap();
         let viewport_size = viewport_max - viewport_min;
         let adj_cursor_pos = cursor - Vec2::new(viewport_min.x, screen_size.y - viewport_max.y);
-        println!("{:?}, {:?}", cursor, adj_cursor_pos);
         let projection = camera.projection_matrix();
         let far_ndc = projection.project_point3(Vec3::NEG_Z).z;
         let near_ndc = projection.project_point3(Vec3::Z).z;
@@ -592,7 +590,6 @@ pub fn select_card(
         let mut near = ndc_to_world.project_point3(cursor_ndc.extend(near_ndc));
         let mut far = ndc_to_world.project_point3(cursor_ndc.extend(far_ndc));
         let direction = far - near;
-        println!("{:?}, {:?}", near, far);
         let denom = Vec3::Z.dot(direction);
         if denom.abs() > 0.0001 {
             let t = (Vec3::ZERO - near).dot(Vec3::Z) / denom;

@@ -269,15 +269,15 @@ impl FromWorld for CardData {
         };
         Self {
             mesh: meshes.add(Rectangle {
-                half_size: Vec2::new(Card::ASPECT_RATIO, 1.0),
+                half_size: Vec2::new(Card::ASPECT_RATIO, 1.0) / 2.0,
                 ..default()
             }),
             portrait_mesh: meshes.add(Rectangle {
-                half_size: Vec2::new(Card::ART_ASPECT, 1.0) * 0.65,
+                half_size: Vec2::new(Card::ART_ASPECT, 1.0) * 0.65 / 2.0,
                 ..default()
             }),
             heart_mesh: meshes.add(Rectangle {
-                half_size: Vec2::new(HEART_WIDTH, HEART_HEIGHT),
+                half_size: Vec2::new(HEART_WIDTH, HEART_HEIGHT) / 2.0,
                 ..default()
             }),
             villager_portrait_base: materials.add(StandardMaterial {

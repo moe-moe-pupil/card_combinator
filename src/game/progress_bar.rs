@@ -63,7 +63,7 @@ fn on_spawn_progress_bar(
                     ..default()
                 }),
                 mesh: meshes.add(Rectangle {
-                    half_size: Vec2::new(bar.width, bar.height),
+                    half_size: Vec2::new(bar.width, bar.height) / 2.0,
                     ..default()
                 }),
                 transform: Transform::from_xyz(0.0, 0.0, ProgressBar::Z),
@@ -82,7 +82,7 @@ fn on_spawn_progress_bar(
                         half_size: Vec2::new(
                             bar.width - bar.padding * 2.0,
                             bar.height - bar.padding * 2.0,
-                        ),
+                        ) / 2.0,
                         ..default()
                     }),
                     ..default()

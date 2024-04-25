@@ -170,11 +170,11 @@ impl FromWorld for TileData {
         let asset_server = world.resource::<AssetServer>();
         Self {
             mesh: meshes.add(Rectangle {
-                half_size: Vec2::new(3.0, 3.0),
+                half_size: Vec2::new(3.0, 3.0) / 2.0,
                 ..default()
             }),
             tile_slot_mesh: meshes.add(Rectangle {
-                half_size: Tile::slot_size(),
+                half_size: Tile::slot_size() / 2.0,
                 ..default()
             }),
             woods_material: materials.add(StandardMaterial {

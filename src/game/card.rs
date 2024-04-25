@@ -360,7 +360,7 @@ fn on_spawn_card(
                 .with_children(|parent| {
                     let max = card.info.stats.max_health;
                     let offset = HEART_PANEL_WIDTH / max as f32;
-                    let width = (max as f32 - 1.0)  * offset;
+                    let width = (max as f32 - 1.0) * offset;
                     for i in 0..max {
                         parent.spawn(PbrBundle {
                             material: card_data.heart_material.clone(),
@@ -414,7 +414,7 @@ fn move_cards(
             z_offset += card.animations.select.tick(time.delta());
             if let HoverPoint::Some(hover_point) = *hover_point {
                 transform.translation.x = hover_point.x;
-                transform.translation.y = -hover_point.y;
+                transform.translation.y = hover_point.y;
             }
         } else {
             z_offset += card.animations.deselect.tick(time.delta());
@@ -582,15 +582,17 @@ pub fn select_card(
         let screen_size = camera.logical_target_size().unwrap();
         let viewport_size = viewport_max - viewport_min;
         let adj_cursor_pos = cursor - Vec2::new(viewport_min.x, screen_size.y - viewport_max.y);
+        println!("{:?}, {:?}", cursor, adj_cursor_pos);
         let projection = camera.projection_matrix();
         let far_ndc = projection.project_point3(Vec3::NEG_Z).z;
         let near_ndc = projection.project_point3(Vec3::Z).z;
-        let cursor_ndc = (adj_cursor_pos / viewport_size) * 2.0 - Vec2::ONE;
+        let mut cursor_ndc = (adj_cursor_pos / viewport_size) * 2.0 - Vec2::ONE;
+        cursor_ndc.y *= -1.0;
         let ndc_to_world: Mat4 = view * projection.inverse();
-        let near = ndc_to_world.project_point3(cursor_ndc.extend(near_ndc));
-        let far = ndc_to_world.project_point3(cursor_ndc.extend(far_ndc));
+        let mut near = ndc_to_world.project_point3(cursor_ndc.extend(near_ndc));
+        let mut far = ndc_to_world.project_point3(cursor_ndc.extend(far_ndc));
         let direction = far - near;
-
+        println!("{:?}, {:?}", near, far);
         let denom = Vec3::Z.dot(direction);
         if denom.abs() > 0.0001 {
             let t = (Vec3::ZERO - near).dot(Vec3::Z) / denom;
@@ -664,8 +666,8 @@ pub fn select_card(
                             let slot_size = Tile::slot_size();
                             if transform.translation.x - slot_size.x / 2.0 < hover_point.x
                                 && hover_point.x < transform.translation.x + slot_size.x / 2.0
-                                && transform.translation.y - slot_size.y / 2.0 < -hover_point.y
-                                && -hover_point.y < transform.translation.y + slot_size.y / 2.0
+                                && transform.translation.y - slot_size.y / 2.0 < hover_point.y
+                                && hover_point.y < transform.translation.y + slot_size.y / 2.0
                             {
                                 if tile.try_slotting_card(&mut commands, tile_entity, entity, &card)
                                 {

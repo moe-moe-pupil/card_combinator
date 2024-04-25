@@ -33,7 +33,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     commands.spawn(CardBundle {
-        transform: Transform::from_xyz(-0.5, 10.0, 0.0),
+        transform: Transform::from_xyz(-0.5, 0.0, 0.0),
         card: Card::from(CardType::Villager),
         ..default()
     });
